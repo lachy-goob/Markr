@@ -1,0 +1,33 @@
+{
+  "name": "markr",
+  "version": "1.0.0",
+  "description": "Markr",
+  "main": "index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev src/index.ts",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lachy-goob/Markr.git"
+  },
+  "author": "Lachlan Goebel",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lachy-goob/Markr/issues"
+  },
+  "homepage": "https://github.com/lachy-goob/Markr#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "pg": "^8.15.6",
+    "typeorm": "^0.3.22",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,60 @@
+services:
+  #Markr Application
+
+  app:
+    build: . #Building from Current DIR
+    container_name: markr_app
+    ports:
+      - "4567:4567"
+    volumes:
+      - .:/usr/src/app #Mount current DIR to /usr/src/app
+      - /usr/src/app/node_modules # Exclude node modules from being overriden
+    environment:
+      - NODE_ENV=development
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+      - POSTGRES_USER=markr_user
+      - POSTGRES_PASSWORD=markr_password
+      - POSTGRES_DB=markr_db
+      # TypeORM uses DATABASE_URL or individual parameters
+      # Both are included for flexibility
+      - DATABASE_URL=postgresql://markr_user:markr_password@db:5432/markr_db
+    depends_on:
+      db:
+        condition: service_healthy #Wait for DB Service to be healthy before attempting to connect
+
+    networks:
+      - markr_network
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: markr_postgres_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: markr_user
+      POSTGRES_PASSWORD: markr_password
+      POSTGRES_DB: markr_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persist database data
+    ports:
+      - "5433:5432"
+    networks:
+      - markr_network
+    healthcheck: #Monitor readiness of container and ensures it's functioning correctly
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -h localhost",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_data: # Named Volume for Data Persistence
+
+networks:
+  markr_network:
+    driver: bridge

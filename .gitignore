@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker
+docker-compose.override.yml
+# If it's ever accidently created locally:
+postgres_data/ 
