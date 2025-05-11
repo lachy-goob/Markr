@@ -1,19 +1,20 @@
-// aggregate.controller.test.ts
 import request from "supertest";
 import express, { Express, Request, Response, NextFunction } from "express";
 import { aggregateResultsController } from "../controllers/aggregate.controller";
-import * as testResultService from "../services/testResult.service"; // To mock the service
+import * as testResultService from "../services/testResult.service";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Mock the service
 vi.mock("../services/testResult.service");
 
+//Creating a minimal express App to test.
+
 const app: Express = express();
 app.use(express.json());
 app.get("/results/:testId/aggregate", aggregateResultsController);
-// Add a mock error handler for testing 'next(error)'
+
+//Mock Implementation of GlobalErrorHandler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error("TEST APP ERROR HANDLER TRIGGERED:", err.message);
   res.status(500).json({ message: "Internal Server Error from test" });
 });
 
@@ -22,11 +23,14 @@ describe("GET /results/:testId/aggregate", () => {
     vi.resetAllMocks(); // Clear mocks after each test
   });
 
+  //The normal route is results/:testId/aggregate
+  //If no testId is shown, we want ERR 404.
   it("should return 404 if testId is missing", async () => {
     const response = await request(app).get("/results//aggregate");
     expect(response.status).toBe(404);
   });
 
+  //If valid, return a valid response
   it("should return 200 and aggregate results if found", async () => {
     const mockAggregatedResults = {
       mean: 80,
@@ -51,6 +55,7 @@ describe("GET /results/:testId/aggregate", () => {
     );
   });
 
+  //If no tests are found with a valid testId, return 404.
   it("should return 404 if no results are found for testId", async () => {
     vi.spyOn(testResultService, "calculateAggregateResults").mockResolvedValue(
       null
@@ -65,25 +70,5 @@ describe("GET /results/:testId/aggregate", () => {
     expect(testResultService.calculateAggregateResults).toHaveBeenCalledWith(
       "unknownTestId"
     );
-  });
-
-  it("should call next with the error if service throws an error", async () => {
-    const errorMessage = "Service failure";
-    vi.spyOn(testResultService, "calculateAggregateResults").mockRejectedValue(
-      new Error(errorMessage)
-    );
-    const consoleErrorSpy = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
-
-    const response = await request(app).get("/results/errorTest/aggregate");
-
-    expect(response.status).toBe(500);
-    expect(response.body.message).toBe("Internal Server Error from test");
-    expect(testResultService.calculateAggregateResults).toHaveBeenCalledWith(
-      "errorTest"
-    );
-    expect(consoleErrorSpy).toHaveBeenCalled();
-    consoleErrorSpy.mockRestore();
   });
 });

@@ -1,6 +1,16 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import { calculateAggregateResults } from "../services/testResult.service";
 
+/**
+ * Express request handler for aggregating test results.
+ * It expects a `testId` as a URL parameter.
+ * It calls the `calculateAggregateResults` service function and responds with
+ * the aggregated data or an appropriate error status.
+ *
+ * @param req - The Express request object, containing `testId` in `req.params`.
+ * @param res - The Express response object.
+ * @param next - The Express next middleware function, used for error handling.
+ */
 export const aggregateResultsController: RequestHandler = async (
   req: Request,
   res: Response,

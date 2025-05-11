@@ -8,6 +8,7 @@ import {
 import { describe, it, expect } from "vitest";
 
 describe("Statistics Functions", () => {
+  //Test suite for calculating mean
   describe("calculateMean", () => {
     it("should return 0 for an empty array", () => {
       expect(calculateMean([])).toBe(0);
@@ -20,6 +21,7 @@ describe("Statistics Functions", () => {
     });
   });
 
+  //Test suite for calculating Standard Deviation
   describe("calculateStdDev", () => {
     it("should return 0 for an empty array", () => {
       expect(calculateStdDev([], 0)).toBe(0);
@@ -32,6 +34,7 @@ describe("Statistics Functions", () => {
     });
   });
 
+  //Test suite for calculating the minimum value
   describe("calculateMin", () => {
     it("should return Infinity for an empty array", () => {
       expect(calculateMin([])).toBe(0);
@@ -44,6 +47,7 @@ describe("Statistics Functions", () => {
     });
   });
 
+  //Test suite for calculating the Max value
   describe("calculateMax", () => {
     it("should return -Infinity for an empty array", () => {
       expect(calculateMax([])).toBe(0);
@@ -56,6 +60,7 @@ describe("Statistics Functions", () => {
     });
   });
 
+  //Test suite for calculating the percentile ranges
   describe("calculatePercentile", () => {
     it("should return 0 for an empty array", () => {
       expect(calculatePercentile([], 50)).toBe(0);

@@ -10,9 +10,12 @@ import {
   vi,
 } from "vitest";
 
+//Test suite for teh calculateAggregateResults service function
 describe("calculateAggregateResults", () => {
+  //Declare a variable to hold the mock instance of findAllByTestId
   let mockFindAllByTestId: MockInstance;
 
+  //Setup and Spy on Mock the Mock Repository Function
   beforeEach(() => {
     mockFindAllByTestId = vi.spyOn(
       studentTestResultRepository,
@@ -20,6 +23,7 @@ describe("calculateAggregateResults", () => {
     );
   });
 
+  //Cleanup: Restore all mocked functions.
   afterEach(() => {
     vi.restoreAllMocks();
   });

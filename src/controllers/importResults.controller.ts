@@ -1,6 +1,15 @@
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import { importAndIngestXmlResults } from "../services/importTestResults.service";
 
+/**
+ * Express request handler for importing test results from XML data.
+ * It expects XML data in the request body with a 'text/xml+markr' Content-Type.
+ * It validates the request and then calls the `importAndIngestXmlResults` service.
+ *
+ * @param req - The Express request object, containing XML data in `req.body`.
+ * @param res - The Express response object.
+ * @param next - The Express next middleware function, used for error handling.
+ */
 export const importResultsController: RequestHandler = async (
   req: Request,
   res: Response,
@@ -24,6 +33,8 @@ export const importResultsController: RequestHandler = async (
     const importCount = await importAndIngestXmlResults(xmlData);
 
     res.status(200).send(`Successfully processed ${importCount} results`);
+
+    //Alternative to Logger - will be able to pull specific error messages by type narrowing error.
   } catch (error: unknown) {
     if (error instanceof Error && error.message) {
       if (error.message.startsWith("No results found in test")) {

@@ -16,11 +16,16 @@ import { globalErrorHandler } from "../middleware/errorHandler";
 import { AppDataSource } from "../data-source";
 import { EntityManager } from "typeorm";
 
+//Attempt at E2E Testing with test_db
+// Minimal Express app.
+
 const app = express();
 app.use(express.text({ type: "text/xml+markr" }));
 app.post("/import", importResultsController);
 app.use(globalErrorHandler);
 
+//Initialise the Database, and clear it after each test so we don't need to keep making up data.
+//Destroy the database instance after tests have run.
 describe("Import Results E2E Tests", () => {
   const testTransactionManager: EntityManager = AppDataSource.manager;
 
@@ -69,6 +74,76 @@ describe("Import Results E2E Tests", () => {
         </mcq-test-result>
     </mcq-test-results>
         `;
+
+    const response = await request(app)
+      .post("/import")
+      .set("Content-Type", "text/xml+markr")
+      .send(validXml);
+
+    expect(response.status).toBe(200);
+    expect(response.text).toBe("Successfully processed 1 results");
+  });
+
+  it("should only add one entry into the database", async () => {
+    const validXml = `<?xml version="1.0" encoding="UTF-8" ?>
+    <mcq-test-results>
+
+        <mcq-test-result scanned-on="2017-12-04T12:12:10+11:00">
+            <first-name>KJ</first-name>
+            <last-name>Alysander</last-name>
+            <student-number>002299</student-number>
+            <test-id>9863</test-id>
+            <answer question="0" marks-available="1" marks-awarded="1">D</answer>
+            <answer question="1" marks-available="1" marks-awarded="1">D</answer>
+            <answer question="2" marks-available="1" marks-awarded="1">D</answer>
+            <answer question="3" marks-available="1" marks-awarded="0">C</answer>
+            <answer question="4" marks-available="1" marks-awarded="1">B</answer>
+            <answer question="5" marks-available="1" marks-awarded="0">D</answer>
+            <answer question="6" marks-available="1" marks-awarded="0">A</answer>
+            <answer question="7" marks-available="1" marks-awarded="1">A</answer>
+            <answer question="8" marks-available="1" marks-awarded="1">B</answer>
+            <answer question="9" marks-available="1" marks-awarded="1">D</answer>
+            <answer question="10" marks-available="1" marks-awarded="1">A</answer>
+            <answer question="11" marks-available="1" marks-awarded="1">B</answer>
+            <answer question="12" marks-available="1" marks-awarded="0">A</answer>
+            <answer question="13" marks-available="1" marks-awarded="0">B</answer>
+            <answer question="14" marks-available="1" marks-awarded="1">B</answer>
+            <answer question="15" marks-available="1" marks-awarded="1">A</answer>
+            <answer question="16" marks-available="1" marks-awarded="1">C</answer>
+            <answer question="17" marks-available="1" marks-awarded="0">B</answer>
+            <answer question="18" marks-available="1" marks-awarded="1">A</answer>
+            <answer question="19" marks-available="1" marks-awarded="0">B</answer>
+            <summary-marks available="20" obtained="15" />
+        </mcq-test-result>
+                <mcq-test-result scanned-on="2017-12-04T12:12:10+11:00">
+            <first-name>KJ</first-name>
+            <last-name>Alysander</last-name>
+            <student-number>002299</student-number>
+            <test-id>9863</test-id>
+            <answer question="0" marks-available="1" marks-awarded="1">D</answer>
+            <answer question="1" marks-available="1" marks-awarded="1">D</answer>
+            <answer question="2" marks-available="1" marks-awarded="1">D</answer>
+            <answer question="3" marks-available="1" marks-awarded="0">C</answer>
+            <answer question="4" marks-available="1" marks-awarded="1">B</answer>
+            <answer question="5" marks-available="1" marks-awarded="0">D</answer>
+            <answer question="6" marks-available="1" marks-awarded="0">A</answer>
+            <answer question="7" marks-available="1" marks-awarded="1">A</answer>
+            <answer question="8" marks-available="1" marks-awarded="1">B</answer>
+            <answer question="9" marks-available="1" marks-awarded="1">D</answer>
+            <answer question="10" marks-available="1" marks-awarded="1">A</answer>
+            <answer question="11" marks-available="1" marks-awarded="1">B</answer>
+            <answer question="12" marks-available="1" marks-awarded="0">A</answer>
+            <answer question="13" marks-available="1" marks-awarded="0">B</answer>
+            <answer question="14" marks-available="1" marks-awarded="1">B</answer>
+            <answer question="15" marks-available="1" marks-awarded="1">A</answer>
+            <answer question="16" marks-available="1" marks-awarded="1">C</answer>
+            <answer question="17" marks-available="1" marks-awarded="0">B</answer>
+            <answer question="18" marks-available="1" marks-awarded="1">A</answer>
+            <answer question="19" marks-available="1" marks-awarded="0">B</answer>
+            <summary-marks available="20" obtained="13" />
+        </mcq-test-result>
+    </mcq-test-results>
+    `;
 
     const response = await request(app)
       .post("/import")
