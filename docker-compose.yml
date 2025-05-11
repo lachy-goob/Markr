@@ -8,14 +8,8 @@ services:
     volumes:
       - .:/usr/src/app # Mount current dir to /usr/src/app
       - /usr/src/app/node_modules # Prevent overriding node_modules
-    environment:
-      - NODE_ENV=development
-      - DATABASE_HOST=db
-      - DATABASE_PORT=5432
-      - POSTGRES_USER=markr_user
-      - POSTGRES_PASSWORD=markr_password
-      - POSTGRES_DB=markr_db
-      - DATABASE_URL=postgresql://markr_user:markr_password@db:5432/markr_db
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy
@@ -28,9 +22,13 @@ services:
     container_name: markr_postgres_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: markr_user
-      POSTGRES_PASSWORD: markr_password
-      POSTGRES_DB: markr_db
+      # These are needed for pg_isready and for initializing the database
+      # They can also be in the .env file for other services to use
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    env_file: # You can still load other shared variables if needed
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -53,13 +51,8 @@ services:
     build: .
     container_name: markr_test
     command: ["sh", "-c", "./scripts/wait-for-postgres.sh"]
-    environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: markr_user
-      DB_PASSWORD: markr_password
-      DB_NAME: test_db
-      DATABASE_URL: postgresql://markr_user:markr_password@db:5432/markr_db
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy

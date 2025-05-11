@@ -1,4 +1,4 @@
-FROM node:18-alpine As development
+FROM node:18-alpine
 
 
 # Install Postgres
