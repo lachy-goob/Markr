@@ -30,10 +30,10 @@ export class StudentTestResult {
   lastName!: string;
 
   @Column({ type: "integer" })
-  marksAvailable!: number;
+  availableMarks!: number;
 
   @Column({ type: "integer" })
-  marksObtained!: number;
+  obtainedMarks!: number;
 
   @CreateDateColumn()
   createdAt!: Date;

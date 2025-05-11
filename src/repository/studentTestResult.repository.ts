@@ -51,7 +51,7 @@ export async function findAllByTestIdSorted(
 ): Promise<StudentTestResult[]> {
   return manager.find(StudentTestResult, {
     where: { testId },
-    order: { marksObtained: "ASC" },
+    order: { obtainedMarks: "ASC" },
   });
 }
 
