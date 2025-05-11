@@ -2,15 +2,15 @@ import { XMLParser } from "fast-xml-parser";
 import { DeepPartial, EntityManager } from "typeorm";
 import { AppDataSource } from "../data-source";
 import { StudentTestResult } from "../entity/StudentTestResult";
-import * as studentTestResultRepository from "../repository/studentTestResult.repository";
+
 interface ProcessedResultFromXml {
   firstName: string;
   lastName: string;
   studentNumber: string;
   testId: string;
   scannedOn: Date;
-  marksAvailable: number;
-  marksObtained: number;
+  availableMarks: number;
+  obtainedMarks: number;
 }
 
 interface TestResultXML {
@@ -24,6 +24,7 @@ interface TestResultXML {
     "@obtained": string;
   };
 }
+
 interface TestResultsXML {
   "mcq-test-results": {
     "mcq-test-result": TestResultXML | TestResultXML[];
@@ -101,10 +102,10 @@ export async function importAndIngestXmlResults(
         );
       }
 
-      const marksAvailable = parseInt(summaryMarksData["@available"], 10);
-      const marksObtained = parseInt(summaryMarksData["@obtained"], 10);
+      const availableMarks = parseInt(summaryMarksData["@available"], 10);
+      const obtainedMarks = parseInt(summaryMarksData["@obtained"], 10);
 
-      if (isNaN(marksAvailable) || isNaN(marksObtained)) {
+      if (isNaN(availableMarks) || isNaN(obtainedMarks)) {
         throw new Error(
           `Invalid marks in XML data for student: ${studentNumber}, test: ${testId}. Available='${summaryMarksData["@available"]}', Obtained='${summaryMarksData["@obtained"]}'.`
         );
@@ -116,8 +117,8 @@ export async function importAndIngestXmlResults(
         studentNumber,
         testId,
         scannedOn,
-        marksAvailable,
-        marksObtained,
+        availableMarks,
+        obtainedMarks,
       });
     }
 
@@ -126,75 +127,56 @@ export async function importAndIngestXmlResults(
       return 0;
     }
 
-    // 3. Database Ingestion Logic
-    return await AppDataSource.transaction(async (manager: EntityManager) => {
-      const studentNumbersToFetch = [
-        ...new Set(processedRecords.map((record) => record.studentNumber)),
-      ];
-      const testIdsToFetch = [
-        ...new Set(processedRecords.map((record) => record.testId)),
-      ];
+    let createdCount = 0;
+    let updatedCount = 0;
 
-      const existingDbResults =
-        await studentTestResultRepository.findExistingByStudentNumbersAndTestIds(
-          manager,
-          studentNumbersToFetch,
-          testIdsToFetch
-        );
+    await AppDataSource.manager.transaction(async (manager: EntityManager) => {
+      for (const record of processedRecords) {
+        const existingResult = await manager.findOne(StudentTestResult, {
+          where: {
+            studentNumber: record.studentNumber,
+            testId: record.testId,
+          },
+        });
 
-      const existingResultsMap = new Map<string, StudentTestResult>();
-      for (const dbResult of existingDbResults) {
-        const key = `${dbResult.studentNumber}-${dbResult.testId}`;
-        existingResultsMap.set(key, dbResult);
-      }
+        if (existingResult) {
+          if (record.obtainedMarks > existingResult.obtainedMarks) {
+            existingResult.firstName = record.firstName;
+            existingResult.lastName = record.lastName;
+            existingResult.scannedOn = record.scannedOn;
+            existingResult.availableMarks = record.availableMarks;
+            existingResult.obtainedMarks = record.obtainedMarks;
 
-      const entitiesToSave: StudentTestResult[] = [];
-
-      for (const processedRecord of processedRecords) {
-        const mapKey = `${processedRecord.studentNumber}-${processedRecord.testId}`;
-        const existingEntity = existingResultsMap.get(mapKey);
-
-        if (existingEntity) {
-          // Record exists, check if update is needed
-          if (processedRecord.marksObtained > existingEntity.obtainedMarks) {
-            // Update existing entity instance directly
-            existingEntity.scannedOn = processedRecord.scannedOn;
-            existingEntity.availableMarks = processedRecord.marksAvailable;
-            existingEntity.obtainedMarks = processedRecord.marksObtained;
-            existingEntity.firstName = processedRecord.firstName;
-            existingEntity.lastName = processedRecord.lastName;
-            // Add other fields if they should be updated from ProcessedResultFromXml
-            entitiesToSave.push(existingEntity);
+            await manager.save(existingResult);
+            updatedCount++;
           }
         } else {
-          // Record is new, create a new entity
-          const newResultEntity =
-            studentTestResultRepository.createResultEntity(
-              manager,
-              processedRecord as DeepPartial<StudentTestResult> // Ensure ProcessedResultFromXml aligns with what createResultEntity expects
-            );
-          entitiesToSave.push(newResultEntity);
+          const newResult = manager.create(StudentTestResult, {
+            studentNumber: record.studentNumber,
+            testId: record.testId,
+            firstName: record.firstName,
+            lastName: record.lastName,
+            scannedOn: record.scannedOn,
+            availableMarks: record.availableMarks,
+            obtainedMarks: record.obtainedMarks,
+          });
+
+          await manager.save(newResult);
+          createdCount++;
         }
       }
-
-      if (entitiesToSave.length > 0) {
-        // Assuming saveResults handles both new and updated (managed) entities
-        await studentTestResultRepository.saveResults(manager, entitiesToSave);
-        console.log(
-          `Saved/Updated ${entitiesToSave.length} student test results to the database.`
-        );
-        return entitiesToSave.length; // Return the count of affected records
-      } else {
-        console.log(
-          "No new or updated results to save based on the provided XML."
-        );
-        return 0;
-      }
     });
-  } catch (error) {
-    console.error("Error during XML import and ingestion:", error);
-    const message = error instanceof Error ? error.message : String(error);
-    // This error will be caught by your controller's try/catch and passed to next(error)
-    throw new Error("Failed to import and ingest test results: " + message);
+
+    console.log(
+      `Imported Test Results - Created: ${createdCount}, Updated: ${updatedCount}`
+    );
+    return createdCount + updatedCount;
+  } catch (err) {
+    console.error("Error importing test results:", err);
+    throw new Error(
+      `Failed to import and ingest test results: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
   }
 }
