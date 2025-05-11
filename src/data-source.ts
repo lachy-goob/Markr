@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
+import { StudentTestResult } from "./entity/StudentTestResult";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -11,7 +12,7 @@ export const AppDataSource = new DataSource({
   synchronize: process.env.NODE_ENV === "development",
   logging:
     process.env.NODE_ENV === "development" ? ["query", "error"] : ["error"],
-  entities: [],
+  entities: [StudentTestResult],
   migrations: [],
   subscribers: [],
 });
