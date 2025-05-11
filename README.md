@@ -147,10 +147,28 @@ Based on the problem description and typical system behaviors, the following ass
 
 6.  **Stopping the Services:**
     To stop the application and database containers:
+
     ```bash
     docker-compose down
     ```
+
     To stop and remove volumes (deleting database data):
+
     ```bash
     docker-compose down -v
     ```
+
+7.  **Considerations for Real Time Dashboard:**
+
+The current implementation will quickly become a bottleneck with real-time dashboards, as it calculates statistics after retrieving all records fro teh database.
+
+1. Database Aggregation
+   SQL supports Aggregate Functions `average, min, max, count, percentile_count etc.`. This would significally lower the data transfer between db and app.
+
+2. Aggregation Table
+
+When new test results are added, trigger a `TestAggregateStat` function that updates a similiar table. This would be greatly beneficial for aggregate lookup, however would add a lot of overhead during data ingestion.
+
+3. Caching
+
+Add a Caching layer to handle frequently accessed tests.
