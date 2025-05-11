@@ -57,7 +57,7 @@ export async function importAndIngestXmlResults(
 
     if (!mcqTestResultsFromXml) {
       console.log("No 'mcq-test-result' entries found in XML.");
-      return 0;
+      throw new Error("No test results found");
     }
 
     const resultsFromXmlArray = Array.isArray(mcqTestResultsFromXml)
@@ -66,7 +66,7 @@ export async function importAndIngestXmlResults(
 
     if (resultsFromXmlArray.length === 0) {
       console.log("XML results array is empty after parsing.");
-      return 0;
+      throw new Error("No results found in test");
     }
 
     const processedRecords: ProcessedResultFromXml[] = [];
@@ -88,11 +88,7 @@ export async function importAndIngestXmlResults(
         summaryMarksData["@available"] === undefined ||
         summaryMarksData["@obtained"] === undefined
       ) {
-        throw new Error(
-          `Missing required fields in XML record for student: ${
-            studentNumber || "N/A"
-          }, test: ${testId || "N/A"}.`
-        );
+        throw new Error("Missing required fields in XML record");
       }
 
       const scannedOn = new Date(scannedOnString);
@@ -123,8 +119,7 @@ export async function importAndIngestXmlResults(
     }
 
     if (processedRecords.length === 0) {
-      console.log("No valid records found in XML after validation.");
-      return 0;
+      throw new Error(`No valid records found in XML after validation`);
     }
 
     let createdCount = 0;
@@ -172,7 +167,6 @@ export async function importAndIngestXmlResults(
     );
     return createdCount + updatedCount;
   } catch (err) {
-    console.error("Error importing test results:", err);
     throw new Error(
       `Failed to import and ingest test results: ${
         err instanceof Error ? err.message : String(err)
