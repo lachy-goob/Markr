@@ -1,5 +1,9 @@
 FROM node:18-alpine As development
 
+
+# Install Postgres
+RUN apk update && apk add postgresql-client
+
 # Working Directory
 WORKDIR /app
 

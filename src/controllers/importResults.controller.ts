@@ -10,7 +10,7 @@ export const importResultsController: RequestHandler = async (
     if (req.headers["content-type"] !== "text/xml+markr") {
       res
         .status(415)
-        .json({ message: "Unsupported Media Type. Expected text/xml+marker " });
+        .json({ message: "Unsupported Media Type. Expected text/xml+markr" });
       return;
     }
 
@@ -23,7 +23,7 @@ export const importResultsController: RequestHandler = async (
 
     const importCount = await importAndIngestXmlResults(xmlData);
 
-    res.status(202).send(`Successfully processed ${importCount} results`);
+    res.status(200).send(`Successfully processed ${importCount} results`);
     return;
   } catch (error) {
     console.error("Error importing test results:", error);

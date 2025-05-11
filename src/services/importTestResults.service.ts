@@ -1,5 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
-import { DeepPartial, EntityManager } from "typeorm";
+import { EntityManager } from "typeorm";
 import { AppDataSource } from "../data-source";
 import { StudentTestResult } from "../entity/StudentTestResult";
 

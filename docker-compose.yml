@@ -1,14 +1,13 @@
 services:
-  #Markr Application
-
+  # Markr Application
   app:
-    build: . #Building from Current DIR
+    build: . # Building from current dir
     container_name: markr_app
     ports:
       - "4567:4567"
     volumes:
-      - .:/usr/src/app #Mount current DIR to /usr/src/app
-      - /usr/src/app/node_modules # Exclude node modules from being overriden
+      - .:/usr/src/app # Mount current dir to /usr/src/app
+      - /usr/src/app/node_modules # Prevent overriding node_modules
     environment:
       - NODE_ENV=development
       - DATABASE_HOST=db
@@ -16,13 +15,10 @@ services:
       - POSTGRES_USER=markr_user
       - POSTGRES_PASSWORD=markr_password
       - POSTGRES_DB=markr_db
-      # TypeORM uses DATABASE_URL or individual parameters
-      # Both are included for flexibility
       - DATABASE_URL=postgresql://markr_user:markr_password@db:5432/markr_db
     depends_on:
       db:
-        condition: service_healthy #Wait for DB Service to be healthy before attempting to connect
-
+        condition: service_healthy
     networks:
       - markr_network
 
@@ -36,12 +32,12 @@ services:
       POSTGRES_PASSWORD: markr_password
       POSTGRES_DB: markr_db
     volumes:
-      - postgres_data:/var/lib/postgresql/data # Persist database data
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5433:5432"
     networks:
       - markr_network
-    healthcheck: #Monitor readiness of container and ensures it's functioning correctly
+    healthcheck:
       test:
         [
           "CMD-SHELL",
@@ -52,8 +48,29 @@ services:
       retries: 5
       start_period: 10s
 
+  # Test Runner
+  test:
+    build: .
+    container_name: markr_test
+    command: ["sh", "-c", "./scripts/wait-for-postgres.sh"]
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: markr_user
+      DB_PASSWORD: markr_password
+      DB_NAME: test_db
+      DATABASE_URL: postgresql://markr_user:markr_password@db:5432/markr_db
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["test"]
+    volumes:
+      - .:/usr/src/app
+    networks:
+      - markr_network
+
 volumes:
-  postgres_data: # Named Volume for Data Persistence
+  postgres_data:
 
 networks:
   markr_network:
