@@ -61,6 +61,12 @@ Based on the problem description and typical system behaviors, the following ass
   - No Logger has been implemented.
 - **Testing:** Unit tests for services and utility functions, and End-to-End (E2E) tests for API endpoints are written using Vitest and Supertest.
 
+## typeORM
+
+- typeORM is an Object-relational mapping library. The DB model is stored in entity/StudentTestResult. For clarity, I've moved the database logic into the repository folder. All configurations can be found in the data-source.ts file.
+
+- Future Implementation: Migration and Logging
+
 ## Performance Considerations (Prototype)
 
 - **Aggregation:** The current aggregation logic fetches all results for a given `testId` from the database into application memory before performing statistical calculations. While suitable for a prototype and moderately sized tests, this approach could face performance degradation with extremely large datasets (i.e., a single test taken by tens of thousands of students).
@@ -95,7 +101,6 @@ Based on the problem description and typical system behaviors, the following ass
     POSTGRES_USER=markr_user
     POSTGRES_PASSWORD=markr_password
     POSTGRES_DB=markr_db
-    NODE_ENV=development
     ```
 
 3.  **Build and Run using Docker Compose:**
