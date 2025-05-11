@@ -11,10 +11,12 @@ export const importResultsController: RequestHandler = async (
       res
         .status(415)
         .json({ message: "Unsupported Media Type. Expected text/xml+markr" });
+      return;
     }
 
     if (!req.body || req.body.length === 0) {
       res.status(400).json({ message: "Request Body is Empty!" });
+      return;
     }
 
     const xmlData = req.body.toString();

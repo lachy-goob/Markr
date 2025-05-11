@@ -9,7 +9,8 @@ export const aggregateResultsController: RequestHandler = async (
   const { testId } = req.params;
 
   if (!testId) {
-    res.status(400).json({ message: "Test ID is required" });
+    res.status(404).json({ message: "Test ID is required" });
+    return;
   }
 
   try {
@@ -18,6 +19,7 @@ export const aggregateResultsController: RequestHandler = async (
       res
         .status(404)
         .json({ message: `No results found for test ID: ${testId}` });
+      return;
     }
 
     res.json(aggregateResults);
