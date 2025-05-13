@@ -8,11 +8,13 @@ import {
 } from "typeorm";
 
 @Entity("student_test_results")
+@Index(["testId", "obtainedMarks"])
 //@Check(`"marksObtained" >= 0`) //Ensures that Obtainable Marks aren't negative
 //@Check(`"marksAvailable" >=0`) //Ensures that Available Marks aren't negative
 //@Check(`"marksObtained" <= "marksAvailable"`) //Ensures that Obtainable Marks are always less than Marks Available
 //Compose Primary Key is created on studentNum/testId, so they must be UNIQUE.
 export class StudentTestResult {
+  @Index() //We also fetch student numbers
   @PrimaryColumn({ type: "varchar" })
   studentNumber!: string; //Not null Assertion
 

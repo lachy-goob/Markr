@@ -11,8 +11,7 @@ export const AppDataSource = new DataSource({
   database: process.env.POSTGRES_DB || "markr_db",
   synchronize:
     process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test",
-  logging:
-    process.env.NODE_ENV === "development" ? ["query", "error"] : ["error"],
+  logging: false,
   entities: [StudentTestResult],
   migrations: [],
   subscribers: [],
