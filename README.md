@@ -92,6 +92,21 @@ Based on the problem description and typical system behaviors, the following ass
     ```
 
 2.  **Set up Environment Variables:**
+
+    Create `.env` from `example.env`
+
+    Windows:
+
+    ```
+    copy .env.example .env
+    ```
+
+    Linux:
+
+    ```
+    cp .env.example .env
+    ```
+
     Modify `.env` as needed. The default values are configured to work with the `docker-compose.yml` setup.
 
     ```dotenv
@@ -118,7 +133,7 @@ Based on the problem description and typical system behaviors, the following ass
       Create a sample XML file (e.g., `my_results.xml` based on the provided `sample_results.xml` or the problem description format).
 
       ```bash
-      curl -X POST -H 'Content-Type: text/xml+markr' --data-binary "@my_results.xml" http://localhost:4567/import
+      curl -X POST -H "Content-Type: text/xml+markr" --data-binary @data.xml" http://localhost:4567/import
       ```
 
     - **Get Aggregates:**
