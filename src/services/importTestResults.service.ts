@@ -2,6 +2,11 @@ import { XMLParser } from "fast-xml-parser";
 import { EntityManager } from "typeorm";
 import { AppDataSource } from "../data-source";
 import { StudentTestResult } from "../entity/StudentTestResult";
+import {
+  findExistingByStudentTestPairs,
+  saveResults,
+  StudentTestKeyPair,
+} from "../repository/studentTestResult.repository";
 
 /**
  * Defines the structure of a processed test result from XML
@@ -146,39 +151,76 @@ export async function importAndIngestXmlResults(
       });
     }
 
+    const uniqueProcessedRecordsMap = new Map<string, ProcessedResultFromXml>();
+    for (const record of processedRecords) {
+      const key = `${record.studentNumber}-${record.testId}`;
+      const existingRecordInMap = uniqueProcessedRecordsMap.get(key);
+
+      if (existingRecordInMap) {
+        if (record.obtainedMarks > existingRecordInMap.obtainedMarks) {
+          uniqueProcessedRecordsMap.set(key, record);
+        } else if (
+          record.obtainedMarks === existingRecordInMap.obtainedMarks &&
+          record.availableMarks > existingRecordInMap.availableMarks
+        ) {
+          uniqueProcessedRecordsMap.set(key, record);
+        }
+      } else {
+        uniqueProcessedRecordsMap.set(key, record);
+      }
+    }
+
+    const finalProcessedRecords = Array.from(
+      uniqueProcessedRecordsMap.values()
+    );
+
     // If, after processing, no valid records were found (e.g., all had errors).
-    if (processedRecords.length === 0) {
+    if (finalProcessedRecords.length === 0) {
       throw new Error(`No valid records found in XML after validation`);
     }
 
     let createdCount = 0;
     let updatedCount = 0;
+    const recordsToSave: StudentTestResult[] = [];
 
     // Perform database operations within a transaction.
     await AppDataSource.manager.transaction(async (manager: EntityManager) => {
-      for (const record of processedRecords) {
-        // Check if a result already exists for this student and test.
-        const existingResult = await manager.findOne(StudentTestResult, {
-          where: {
-            studentNumber: record.studentNumber,
-            testId: record.testId,
-          },
-        });
+      const recordKeys: StudentTestKeyPair[] = finalProcessedRecords.map(
+        (pr) => ({
+          studentNumber: pr.studentNumber,
+          testId: pr.testId,
+        })
+      );
+
+      const existingResultsArray = await findExistingByStudentTestPairs(
+        manager,
+        recordKeys
+      );
+
+      const existingResultsMap = new Map<string, StudentTestResult>();
+      existingResultsArray.forEach((er) => {
+        existingResultsMap.set(`${er.studentNumber}-${er.testId}`, er);
+      });
+
+      for (const record of finalProcessedRecords) {
+        const mapKey = `${record.studentNumber}-${record.testId}`;
+        const existingResult = existingResultsMap.get(mapKey);
 
         if (existingResult) {
-          // If exists, update only if the new score is higher.
-          if (record.obtainedMarks > existingResult.obtainedMarks) {
+          if (
+            record.obtainedMarks > existingResult.obtainedMarks ||
+            record.availableMarks > existingResult.availableMarks
+          ) {
+            existingResult.studentNumber = record.studentNumber;
+            existingResult.testId = record.testId;
             existingResult.firstName = record.firstName;
             existingResult.lastName = record.lastName;
             existingResult.scannedOn = record.scannedOn;
             existingResult.availableMarks = record.availableMarks;
             existingResult.obtainedMarks = record.obtainedMarks;
-            // `updatedAt` will be updated automatically by TypeORM.
-            await manager.save(StudentTestResult, existingResult);
             updatedCount++;
           }
         } else {
-          // If not exists, create a new record.
           const newResult = manager.create(StudentTestResult, {
             studentNumber: record.studentNumber,
             testId: record.testId,
@@ -188,9 +230,14 @@ export async function importAndIngestXmlResults(
             availableMarks: record.availableMarks,
             obtainedMarks: record.obtainedMarks,
           });
-          await manager.save(StudentTestResult, newResult);
+
+          recordsToSave.push(newResult);
           createdCount++;
         }
+      }
+
+      if (recordsToSave.length > 0) {
+        await saveResults(manager, recordsToSave);
       }
     });
 

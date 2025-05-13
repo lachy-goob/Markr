@@ -14,29 +14,35 @@ export type StudentTestResultInputData = DeepPartial<StudentTestResult> & {
   marksAvailable: number;
 };
 
-/**
- * Finds existing StudentTestResult entities based on student numbers and test IDs
- * @param manager - TypeORM EntityManager
- * @param studentNumbers - Array of student numbers
- * @param testIds - Array of test IDs
- * @return Promise<StudentTestResult[]> - A list of student test results
- */
-
-export async function findExistingByStudentNumbersAndTestIds(
-  manager: EntityManager,
-  studentNumbers: string[],
-  testIds: string[]
-): Promise<StudentTestResult[]> {
-  if (studentNumbers.length === 0 || testIds.length === 0) {
-    return [];
-  }
-  return manager.find(StudentTestResult, {
-    where: {
-      studentNumber: In(studentNumbers),
-      testId: In(testIds),
-    },
-  });
+export interface StudentTestKeyPair {
+  studentNumber: string;
+  testId: string;
 }
+
+//Unimplemented Logic
+// /**
+//  * Finds existing StudentTestResult entities based on student numbers and test IDs
+//  * @param manager - TypeORM EntityManager
+//  * @param studentNumbers - Array of student numbers
+//  * @param testIds - Array of test IDs
+//  * @return Promise<StudentTestResult[]> - A list of student test results
+//  */
+
+// export async function findExistingByStudentNumbersAndTestIds(
+//   manager: EntityManager,
+//   studentNumbers: string[],
+//   testIds: string[]
+// ): Promise<StudentTestResult[]> {
+//   if (studentNumbers.length === 0 || testIds.length === 0) {
+//     return [];
+//   }
+//   return manager.find(StudentTestResult, {
+//     where: {
+//       studentNumber: In(studentNumbers),
+//       testId: In(testIds),
+//     },
+//   });
+// }
 
 /**
  * Retrieves all student test results for a given test ID, ordered by marks obtained
@@ -52,6 +58,27 @@ export async function findAllByTestIdSorted(
   return manager.find(StudentTestResult, {
     where: { testId },
     order: { obtainedMarks: "ASC" },
+  });
+}
+
+/**
+ *
+ * @param manager - typeORM Manager
+ * @param keys - StudentTestKeyPair objects
+ * @returns Promise<StudentTestResult[]> A list of match student tests
+ */
+export async function findExistingByStudentTestPairs(
+  manager: EntityManager,
+  keys: StudentTestKeyPair[]
+): Promise<StudentTestResult[]> {
+  if (!keys || keys.length === 0) {
+    return [];
+  }
+  return manager.find(StudentTestResult, {
+    where: keys.map((key) => ({
+      studentNumber: key.studentNumber,
+      testId: key.testId,
+    })),
   });
 }
 
